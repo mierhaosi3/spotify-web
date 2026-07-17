@@ -78,6 +78,8 @@ export type TrackSummary = {
 export type LastListenedTrack = TrackSummary & {
   isPlaying: boolean
   playedAt: string | null
+  progressMs?: number | null
+  durationMs?: number | null
 }
 
 export type RecentlyPlayedItem = TrackSummary & {
@@ -127,6 +129,11 @@ export function getDashboard(opts?: {
   return apiFetch<DashboardResponse>(`/spotify/auto/dashboard?${qs}`)
 }
 
+/** Real-time now-playing — no server cache; poll this after dashboard init */
+export function getPlaying() {
+  return apiFetch<PlayingResponse>('/spotify/auto/playing')
+}
+
 export function pickAlbumArt(
   images: SpotifyImage[] | undefined,
 ): string | null {
@@ -149,13 +156,36 @@ export function toTrackSummary(track: SpotifyTrack): TrackSummary {
 
 function toLastListened(
   track: SpotifyTrack,
-  opts: { isPlaying: boolean; playedAt: string | null },
+  opts: {
+    isPlaying: boolean
+    playedAt: string | null
+    progressMs?: number | null
+  },
 ): LastListenedTrack {
   return {
     ...toTrackSummary(track),
     isPlaying: opts.isPlaying,
     playedAt: opts.playedAt,
+    progressMs: opts.progressMs ?? null,
+    durationMs: track.duration_ms ?? null,
   }
+}
+
+/** Map /auto/playing into last-listened; null item means nothing playing */
+export function mapPlaying(
+  playing: PlayingResponse,
+): LastListenedTrack | null {
+  if (!playing?.item) return null
+  const isPlaying = Boolean(playing.is_playing ?? playing.playing)
+  return toLastListened(playing.item, {
+    isPlaying,
+    playedAt: null,
+    progressMs: playing.progress_ms ?? null,
+  })
+}
+
+export async function fetchPlaying(): Promise<LastListenedTrack | null> {
+  return mapPlaying(await getPlaying())
 }
 
 function toProfile(me: SpotifyMe): SpotifyProfile {
@@ -177,6 +207,7 @@ export function mapDashboard(raw: DashboardResponse): DashboardData {
     lastListened = toLastListened(playing.item, {
       isPlaying,
       playedAt: null,
+      progressMs: playing.progress_ms ?? null,
     })
   } else {
     const first = raw.recently_played?.items?.[0]
