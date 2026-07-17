@@ -4,12 +4,22 @@ import { RecentlyPlayed } from '@/components/RecentlyPlayed'
 import { SiteHero } from '@/components/SiteHero'
 import { SitePlaceholders } from '@/components/SitePlaceholders'
 import { TopTracks } from '@/components/TopTracks'
+import { SpotifyDashboardProvider } from '@/hooks/SpotifyDashboardProvider'
 import { useLastListened } from '@/hooks/useLastListened'
 
 /**
- * Fixed garden + rose wave on the sides; music column scrolls on top.
+ * Fixed garden + rain on the sides; music column scrolls on top.
+ * Spotify data comes from a single /auto/dashboard request.
  */
 export function HomePage() {
+  return (
+    <SpotifyDashboardProvider topLimit={4} recentLimit={6}>
+      <HomePageInner />
+    </SpotifyDashboardProvider>
+  )
+}
+
+function HomePageInner() {
   const lastListened = useLastListened()
 
   return (

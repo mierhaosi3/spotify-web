@@ -30,6 +30,7 @@ export type SpotifyMe = {
   id: string
   display_name: string
   email?: string
+  product?: string
   images: SpotifyImage[]
   external_urls: {
     spotify: string
@@ -58,6 +59,14 @@ export type TopTracksResponse = {
   offset?: number
 }
 
+export type DashboardResponse = {
+  version?: string
+  me: SpotifyMe
+  playing: PlayingResponse
+  top_tracks: TopTracksResponse
+  recently_played: RecentlyPlayedResponse
+}
+
 export type TrackSummary = {
   id: string
   name: string
@@ -75,6 +84,20 @@ export type RecentlyPlayedItem = TrackSummary & {
   playedAt: string
 }
 
+export type SpotifyProfile = {
+  id: string
+  displayName: string
+  avatarUrl: string | null
+  spotifyUrl: string
+}
+
+export type DashboardData = {
+  profile: SpotifyProfile | null
+  lastListened: LastListenedTrack | null
+  topTracks: TrackSummary[]
+  recentlyPlayed: RecentlyPlayedItem[]
+}
+
 async function apiFetch<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`)
   if (!res.ok) {
@@ -88,27 +111,20 @@ async function apiFetch<T>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export function getMe() {
-  return apiFetch<SpotifyMe>('/spotify/auto/me')
-}
-
-export function getPlaying() {
-  return apiFetch<PlayingResponse>('/spotify/auto/playing')
-}
-
-export function getRecentlyPlayed(limit = 1) {
-  return apiFetch<RecentlyPlayedResponse>(
-    `/spotify/auto/recently-played?limit=${limit}`,
-  )
-}
-
-export function getTopTracks(
-  timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term',
-  limit = 8,
-) {
-  return apiFetch<TopTracksResponse>(
-    `/spotify/auto/top-tracks?time_range=${timeRange}&limit=${limit}`,
-  )
+export function getDashboard(opts?: {
+  topLimit?: number
+  topRange?: 'short_term' | 'medium_term' | 'long_term'
+  recentLimit?: number
+}) {
+  const topLimit = opts?.topLimit ?? 4
+  const topRange = opts?.topRange ?? 'medium_term'
+  const recentLimit = opts?.recentLimit ?? 6
+  const qs = new URLSearchParams({
+    top_limit: String(topLimit),
+    top_range: topRange,
+    recent_limit: String(recentLimit),
+  })
+  return apiFetch<DashboardResponse>(`/spotify/auto/dashboard?${qs}`)
 }
 
 export function pickAlbumArt(
@@ -142,44 +158,53 @@ function toLastListened(
   }
 }
 
-export async function fetchLastListened(): Promise<LastListenedTrack | null> {
-  const playing = await getPlaying()
-  const hasItem = Boolean(playing.item)
-  const isPlaying = Boolean(playing.is_playing ?? playing.playing)
+function toProfile(me: SpotifyMe): SpotifyProfile {
+  return {
+    id: me.id,
+    displayName: me.display_name,
+    avatarUrl: pickAlbumArt(me.images),
+    spotifyUrl: me.external_urls.spotify,
+  }
+}
 
+export function mapDashboard(raw: DashboardResponse): DashboardData {
+  const playing = raw.playing
+  const hasItem = Boolean(playing?.item)
+  const isPlaying = Boolean(playing?.is_playing ?? playing?.playing)
+
+  let lastListened: LastListenedTrack | null = null
   if (hasItem && playing.item) {
-    return toLastListened(playing.item, {
+    lastListened = toLastListened(playing.item, {
       isPlaying,
       playedAt: null,
     })
+  } else {
+    const first = raw.recently_played?.items?.[0]
+    if (first?.track) {
+      lastListened = toLastListened(first.track, {
+        isPlaying: false,
+        playedAt: first.played_at,
+      })
+    }
   }
 
-  const recent = await getRecentlyPlayed(1)
-  const first = recent.items?.[0]
-  if (!first?.track) return null
-
-  return toLastListened(first.track, {
-    isPlaying: false,
-    playedAt: first.played_at,
-  })
+  return {
+    profile: raw.me ? toProfile(raw.me) : null,
+    lastListened,
+    topTracks: (raw.top_tracks?.items ?? []).map(toTrackSummary),
+    recentlyPlayed: (raw.recently_played?.items ?? [])
+      .filter((item) => item.track)
+      .map((item) => ({
+        ...toTrackSummary(item.track),
+        playedAt: item.played_at,
+      })),
+  }
 }
 
-export async function fetchRecentlyPlayedList(
-  limit = 8,
-): Promise<RecentlyPlayedItem[]> {
-  const recent = await getRecentlyPlayed(limit)
-  return (recent.items ?? [])
-    .filter((item) => item.track)
-    .map((item) => ({
-      ...toTrackSummary(item.track),
-      playedAt: item.played_at,
-    }))
-}
-
-export async function fetchTopTracks(
-  timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term',
-  limit = 8,
-): Promise<TrackSummary[]> {
-  const data = await getTopTracks(timeRange, limit)
-  return (data.items ?? []).map(toTrackSummary)
+export async function fetchDashboard(opts?: {
+  topLimit?: number
+  topRange?: 'short_term' | 'medium_term' | 'long_term'
+  recentLimit?: number
+}): Promise<DashboardData> {
+  return mapDashboard(await getDashboard(opts))
 }
