@@ -51,7 +51,47 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+/* Light */
+:root,
+html.light {
+  --background: #f4f2ef;
+  --foreground: #141418;
+  --card: #ffffff;
+  --card-foreground: #141418;
+  --popover: #ffffff;
+  --popover-foreground: #141418;
+  --primary: #141418;
+  --primary-foreground: #f4f2ef;
+  --secondary: #e8e4df;
+  --secondary-foreground: #141418;
+  --muted: #e8e4df;
+  --muted-foreground: #5c6478;
+  --accent: #ebe6e0;
+  --accent-foreground: #141418;
+  --destructive: oklch(0.55 0.2 25);
+  --border: #d8d2ca;
+  --input: #d8d2ca;
+  --ring: #8892b0;
+  --chart-1: oklch(0.35 0 0);
+  --chart-2: oklch(0.45 0 0);
+  --chart-3: oklch(0.55 0 0);
+  --chart-4: oklch(0.65 0 0);
+  --chart-5: oklch(0.75 0 0);
+  --radius: 0.625rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #141418;
+  --sidebar-primary: #141418;
+  --sidebar-primary-foreground: #f4f2ef;
+  --sidebar-accent: #e8e4df;
+  --sidebar-accent-foreground: #141418;
+  --sidebar-border: #d8d2ca;
+  --sidebar-ring: #8892b0;
+  --stage-void: #e8e4df;
+  --stage-veil: 244, 242, 239;
+}
+
+/* Dark (site default via html.dark) */
+html.dark {
   --background: #050505;
   --foreground: #ffffff;
   --card: #121212;
@@ -84,6 +124,8 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #1f1f1f;
   --sidebar-ring: #8892b0;
+  --stage-void: #090910;
+  --stage-veil: 16, 16, 22;
 }
 
 @layer base {
@@ -93,8 +135,15 @@
   }
 
   html {
-    color-scheme: dark;
     @apply font-sans;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
   }
 
   body {

@@ -1,15 +1,14 @@
 import { GardenStage } from '@/components/GardenStage'
 import { GlassNowPlaying } from '@/components/GlassNowPlaying'
 import { RecentlyPlayed } from '@/components/RecentlyPlayed'
+import { SiteContent } from '@/components/SiteContent'
 import { SiteHero } from '@/components/SiteHero'
-import { SitePlaceholders } from '@/components/SitePlaceholders'
 import { TopTracks } from '@/components/TopTracks'
 import { SpotifyDashboardProvider } from '@/hooks/SpotifyDashboardProvider'
 import { useLastListened } from '@/hooks/useLastListened'
 
 /**
- * Fixed garden + rain on the sides; music column scrolls on top.
- * Spotify data comes from a single /auto/dashboard request.
+ * Fixed garden + weather atmosphere; music column scrolls on top.
  */
 export function HomePage() {
   return (
@@ -23,14 +22,14 @@ function HomePageInner() {
   const lastListened = useLastListened()
 
   return (
-    <div className="relative min-h-[100svh] w-full bg-[#090910] text-foreground">
+    <div className="relative min-h-[100svh] w-full bg-background text-foreground">
       <GardenStage
         overlay={
           <>
             <SiteHero />
 
             <main className="mb-8 flex flex-1 flex-col gap-12">
-              <SitePlaceholders />
+              <SiteContent />
               <TopTracks limit={4} />
               <RecentlyPlayed nowPlayingId={lastListened.track?.id} limit={6} />
             </main>

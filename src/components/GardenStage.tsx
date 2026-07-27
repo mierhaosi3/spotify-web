@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { AmbientWave } from '@/components/AmbientWave'
+import { AtmosphereLayer } from '@/components/AtmosphereLayer'
 import type { ClearZone } from '@/components/clearZone'
+import { useWeather } from '@/hooks/useWeather'
 import { GardenCanvas } from '@/labs/garden/GardenCanvas.jsx'
+import { useTheme } from '@/theme/ThemeProvider'
 import { cn } from '@/lib/utils'
 
 export type { ClearZone }
@@ -13,13 +15,14 @@ type GardenStageProps = {
 const PAD = 4
 
 /**
- * Layers: pixel rain (sides) → garden plants → scrolling music column.
- * Rain + plants share the same clear lane under the music column.
+ * Fixed garden + weather atmosphere; music column scrolls with the window.
  */
 export function GardenStage({ overlay }: GardenStageProps) {
   const stageRef = useRef<HTMLDivElement>(null)
   const musicRef = useRef<HTMLDivElement>(null)
   const [clearZone, setClearZone] = useState<ClearZone | null>(null)
+  const { weather } = useWeather()
+  const { theme } = useTheme()
 
   useLayoutEffect(() => {
     const stage = stageRef.current
@@ -53,14 +56,42 @@ export function GardenStage({ overlay }: GardenStageProps) {
     }
   }, [])
 
+  const veil =
+    theme === 'light'
+      ? 'linear-gradient(to right,' +
+        'transparent 0%,' +
+        'rgba(255,255,255,0.2) 8%,' +
+        'rgba(244,242,239,0.55) 16%,' +
+        'rgba(244,242,239,0.88) 28%,' +
+        'rgba(244,242,239,0.92) 50%,' +
+        'rgba(244,242,239,0.88) 72%,' +
+        'rgba(244,242,239,0.55) 84%,' +
+        'rgba(255,255,255,0.2) 92%,' +
+        'transparent 100%)'
+      : 'linear-gradient(to right,' +
+        'transparent 0%,' +
+        'rgba(255,255,255,0.02) 8%,' +
+        'rgba(16,16,22,0.35) 16%,' +
+        'rgba(16,16,22,0.7) 26%,' +
+        'rgba(16,16,22,0.9) 36%,' +
+        'rgba(16,16,22,0.9) 64%,' +
+        'rgba(16,16,22,0.7) 74%,' +
+        'rgba(16,16,22,0.35) 84%,' +
+        'rgba(255,255,255,0.02) 92%,' +
+        'transparent 100%)'
+
   return (
     <>
       <div
         ref={stageRef}
-        className="pointer-events-none fixed inset-0 z-[1]"
+        className="pointer-events-none fixed inset-0 z-[1] bg-[var(--stage-void)]"
         aria-hidden={false}
       >
-        <AmbientWave clearZone={clearZone} />
+        <AtmosphereLayer
+          mood={weather.mood}
+          isDay={weather.isDay}
+          clearZone={clearZone}
+        />
         <div className="pointer-events-auto relative z-[1] h-full w-full">
           <GardenCanvas clearZone={clearZone} plantCount={34} />
         </div>
@@ -71,31 +102,13 @@ export function GardenStage({ overlay }: GardenStageProps) {
           ref={musicRef}
           className="pointer-events-auto relative w-full max-w-2xl"
         >
-          {/*
-            Visible lane edge (black-on-black was invisible):
-            slightly lifted center + soft rose rims that feather into the garden.
-          */}
           <div
             aria-hidden
             className={cn(
-              'pointer-events-none absolute inset-y-0 -left-28 -right-28 sm:-left-36 sm:-right-36',
+              'pointer-events-none absolute inset-y-0 -left-28 -right-28 sm:-left-40 sm:-right-40',
               'supports-[backdrop-filter]:backdrop-blur-[3px]',
             )}
-            style={{
-              background:
-                // Soft lifted lane — wider feather into the garden
-                'linear-gradient(to right,' +
-                'transparent 0%,' +
-                'rgba(255,255,255,0.02) 8%,' +
-                'rgba(16,16,22,0.35) 16%,' +
-                'rgba(16,16,22,0.7) 26%,' +
-                'rgba(16,16,22,0.9) 36%,' +
-                'rgba(16,16,22,0.9) 64%,' +
-                'rgba(16,16,22,0.7) 74%,' +
-                'rgba(16,16,22,0.35) 84%,' +
-                'rgba(255,255,255,0.02) 92%,' +
-                'transparent 100%)',
-            }}
+            style={{ background: veil }}
           />
 
           <div
