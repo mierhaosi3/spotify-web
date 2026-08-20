@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bezier Curve Animation</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #111;
+        color: #fff;
+        font-family: Arial, sans-serif;
+      }
+
+      .demo {
+        width: 700px;
+        max-width: 90%;
+      }
+
+      h2 {
+        margin-bottom: 30px;
+      }
+
+      .item {
+        margin-bottom: 25px;
+      }
+
+      .label {
+        margin-bottom: 8px;
+        color: #aaa;
+        font-size: 14px;
+      }
+
+      .track {
+        height: 60px;
+        background: #222;
+        border: 1px solid #333;
+        border-radius: 30px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .ball {
+        width: 40px;
+        height: 40px;
+        position: absolute;
+        top: 9px;
+        left: 0;
+
+        background: #4ade80;
+        border-radius: 50%;
+
+        animation-name: move;
+        animation-duration: 2s;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+      }
+
+      /* 默认 */
+      .ease .ball {
+        animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+      }
+
+      .linear .ball {
+        animation-timing-function: linear;
+      }
+
+      .ease-in .ball {
+        animation-timing-function: cubic-bezier(0.42, 0, 1, 1);
+      }
+
+      .ease-out .ball {
+        animation-timing-function: cubic-bezier(0, 0, 0.58, 1);
+      }
+
+      .ease-in-out .ball {
+        animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+      }
+
+      @keyframes move {
+        0% {
+          left: 0;
+        }
+
+        100% {
+          left: calc(100% - 40px);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="demo">
+      <h2>CSS Bezier Animation</h2>
+
+      <div class="item ease">
+        <div class="label">ease — cubic-bezier(.25, .1, .25, 1)</div>
+        <div class="track">
+          <div class="ball"></div>
+        </div>
+      </div>
+
+      <div class="item linear">
+        <div class="label">linear — cubic-bezier(0, 0, 1, 1)</div>
+        <div class="track">
+          <div class="ball"></div>
+        </div>
+      </div>
+
+      <div class="item ease-in">
+        <div class="label">ease-in — cubic-bezier(.42, 0, 1, 1)</div>
+        <div class="track">
+          <div class="ball"></div>
+        </div>
+      </div>
+
+      <div class="item ease-out">
+        <div class="label">ease-out — cubic-bezier(0, 0, .58, 1)</div>
+        <div class="track">
+          <div class="ball"></div>
+        </div>
+      </div>
+
+      <div class="item ease-in-out">
+        <div class="label">ease-in-out — cubic-bezier(.42, 0, .58, 1)</div>
+        <div class="track">
+          <div class="ball"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
